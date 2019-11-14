@@ -10,19 +10,19 @@ import (
 	"golang-starter-pack/utils"
 )
 
-func (h *Handler) GetArticle(c echo.Context) error {
+func (h *Handler) GetItem(c echo.Context) error {
 	slug := c.Param("slug")
-	a, err := h.articleStore.GetBySlug(slug)
+	a, err := h.itemStore.GetBySlug(slug)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
 	if a == nil {
 		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
-	return c.JSON(http.StatusOK, newArticleResponse(c, a))
+	return c.JSON(http.StatusOK, newItemResponse(c, a))
 }
 
-func (h *Handler) Articles(c echo.Context) error {
+func (h *Handler) Items(c echo.Context) error {
 	tag := c.QueryParam("tag")
 	author := c.QueryParam("author")
 	favoritedBy := c.QueryParam("favorited")
@@ -34,34 +34,34 @@ func (h *Handler) Articles(c echo.Context) error {
 	if err != nil {
 		limit = 20
 	}
-	var articles []model.Article
+	var items []model.Item
 	var count int
 	if tag != "" {
-		articles, count, err = h.articleStore.ListByTag(tag, offset, limit)
+		items, count, err = h.itemStore.ListByTag(tag, offset, limit)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, nil)
 		}
 	} else if author != "" {
-		articles, count, err = h.articleStore.ListByAuthor(author, offset, limit)
+		items, count, err = h.itemStore.ListByAuthor(author, offset, limit)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, nil)
 		}
 	} else if favoritedBy != "" {
-		articles, count, err = h.articleStore.ListByWhoFavorited(favoritedBy, offset, limit)
+		items, count, err = h.itemStore.ListByWhoFavorited(favoritedBy, offset, limit)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, nil)
 		}
 	} else {
-		articles, count, err = h.articleStore.List(offset, limit)
+		items, count, err = h.itemStore.List(offset, limit)
 		if err != nil {
 			return c.JSON(http.StatusInternalServerError, nil)
 		}
 	}
-	return c.JSON(http.StatusOK, newArticleListResponse(h.userStore, userIDFromToken(c), articles, count))
+	return c.JSON(http.StatusOK, newItemListResponse(h.playerStore, playerIDFromToken(c), items, count))
 }
 
 func (h *Handler) Feed(c echo.Context) error {
-	var articles []model.Article
+	var items []model.Item
 	var count int
 	offset, err := strconv.Atoi(c.QueryParam("offset"))
 	if err != nil {
@@ -71,58 +71,58 @@ func (h *Handler) Feed(c echo.Context) error {
 	if err != nil {
 		limit = 20
 	}
-	articles, count, err = h.articleStore.ListFeed(userIDFromToken(c), offset, limit)
+	items, count, err = h.itemStore.ListFeed(playerIDFromToken(c), offset, limit)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, nil)
 	}
-	return c.JSON(http.StatusOK, newArticleListResponse(h.userStore, userIDFromToken(c), articles, count))
+	return c.JSON(http.StatusOK, newItemListResponse(h.playerStore, playerIDFromToken(c), items, count))
 }
 
-func (h *Handler) CreateArticle(c echo.Context) error {
-	var a model.Article
-	req := &articleCreateRequest{}
+func (h *Handler) CreateItem(c echo.Context) error {
+	var a model.Item
+	req := &itemCreateRequest{}
 	if err := req.bind(c, &a); err != nil {
 		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
-	a.AuthorID = userIDFromToken(c)
-	err := h.articleStore.CreateArticle(&a)
+	a.AuthorID = playerIDFromToken(c)
+	err := h.itemStore.CreateItem(&a)
 	if err != nil {
 		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
 
-	return c.JSON(http.StatusCreated, newArticleResponse(c, &a))
+	return c.JSON(http.StatusCreated, newItemResponse(c, &a))
 }
 
-func (h *Handler) UpdateArticle(c echo.Context) error {
+func (h *Handler) UpdateItem(c echo.Context) error {
 	slug := c.Param("slug")
-	a, err := h.articleStore.GetUserArticleBySlug(userIDFromToken(c), slug)
+	a, err := h.itemStore.GetPlayerItemBySlug(playerIDFromToken(c), slug)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
 	if a == nil {
 		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
-	req := &articleUpdateRequest{}
+	req := &itemUpdateRequest{}
 	req.populate(a)
 	if err := req.bind(c, a); err != nil {
 		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
-	if err = h.articleStore.UpdateArticle(a, req.Article.Tags); err != nil {
+	if err = h.itemStore.UpdateItem(a, req.Items.Tags); err != nil {
 		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
-	return c.JSON(http.StatusOK, newArticleResponse(c, a))
+	return c.JSON(http.StatusOK, newItemResponse(c, a))
 }
 
-func (h *Handler) DeleteArticle(c echo.Context) error {
+func (h *Handler) DeleteItem(c echo.Context) error {
 	slug := c.Param("slug")
-	a, err := h.articleStore.GetUserArticleBySlug(userIDFromToken(c), slug)
+	a, err := h.itemStore.GetPlayerItemBySlug(playerIDFromToken(c), slug)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
 	if a == nil {
 		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
-	err = h.articleStore.DeleteArticle(a)
+	err = h.itemStore.DeleteItem(a)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
@@ -131,7 +131,7 @@ func (h *Handler) DeleteArticle(c echo.Context) error {
 
 func (h *Handler) AddComment(c echo.Context) error {
 	slug := c.Param("slug")
-	a, err := h.articleStore.GetBySlug(slug)
+	a, err := h.itemStore.GetBySlug(slug)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
@@ -143,7 +143,7 @@ func (h *Handler) AddComment(c echo.Context) error {
 	if err := req.bind(c, &cm); err != nil {
 		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
-	if err = h.articleStore.AddComment(a, &cm); err != nil {
+	if err = h.itemStore.AddComment(a, &cm); err != nil {
 		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
 	return c.JSON(http.StatusCreated, newCommentResponse(c, &cm))
@@ -151,7 +151,7 @@ func (h *Handler) AddComment(c echo.Context) error {
 
 func (h *Handler) GetComments(c echo.Context) error {
 	slug := c.Param("slug")
-	cm, err := h.articleStore.GetCommentsBySlug(slug)
+	cm, err := h.itemStore.GetCommentsBySlug(slug)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
@@ -164,17 +164,17 @@ func (h *Handler) DeleteComment(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, utils.NewError(err))
 	}
-	cm, err := h.articleStore.GetCommentByID(id)
+	cm, err := h.itemStore.GetCommentByID(id)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
 	if cm == nil {
 		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
-	if cm.UserID != userIDFromToken(c) {
+	if cm.PlayerID != playerIDFromToken(c) {
 		return c.JSON(http.StatusUnauthorized, utils.NewError(errors.New("unauthorized action")))
 	}
-	if err := h.articleStore.DeleteComment(cm); err != nil {
+	if err := h.itemStore.DeleteComment(cm); err != nil {
 		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
 	return c.JSON(http.StatusOK, map[string]interface{}{"result": "ok"})
@@ -182,36 +182,36 @@ func (h *Handler) DeleteComment(c echo.Context) error {
 
 func (h *Handler) Favorite(c echo.Context) error {
 	slug := c.Param("slug")
-	a, err := h.articleStore.GetBySlug(slug)
+	a, err := h.itemStore.GetBySlug(slug)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
 	if a == nil {
 		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
-	if err := h.articleStore.AddFavorite(a, userIDFromToken(c)); err != nil {
+	if err := h.itemStore.AddFavorite(a, playerIDFromToken(c)); err != nil {
 		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
-	return c.JSON(http.StatusOK, newArticleResponse(c, a))
+	return c.JSON(http.StatusOK, newItemResponse(c, a))
 }
 
 func (h *Handler) Unfavorite(c echo.Context) error {
 	slug := c.Param("slug")
-	a, err := h.articleStore.GetBySlug(slug)
+	a, err := h.itemStore.GetBySlug(slug)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
 	if a == nil {
 		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
-	if err := h.articleStore.RemoveFavorite(a, userIDFromToken(c)); err != nil {
+	if err := h.itemStore.RemoveFavorite(a, playerIDFromToken(c)); err != nil {
 		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
-	return c.JSON(http.StatusOK, newArticleResponse(c, a))
+	return c.JSON(http.StatusOK, newItemResponse(c, a))
 }
 
 func (h *Handler) Tags(c echo.Context) error {
-	tags, err := h.articleStore.ListTags()
+	tags, err := h.itemStore.ListTags()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	}

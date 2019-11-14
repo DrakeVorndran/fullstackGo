@@ -19,33 +19,33 @@ Created to demonstrate a complete full-stack application built with **Golang, Ec
 
 ```bash
 ├── main.go
-├── article
-│   └── article.go
+├── item
+│   └── item.go
 ├── db
 │   └── db.go
 ├── handler
-│   ├── article.go
-│   ├── article_test.go
+│   ├── item.go
+│   ├── item_test.go
 │   ├── handler.go
 │   ├── handler_test.go
 │   ├── request.go
 │   ├── response.go
 │   ├── routes.go
-│   ├── user.go
-│   └── user_test.go
+│   ├── player.go
+│   └── player_test.go
 ├── model
-│   ├── article.go
-│   └── user.go
+│   ├── item.go
+│   └── player.go
 ├── router
 │   ├── middleware
 │   │   └── jwt.go
 │   ├── router.go
 │   └── validator.go
 ├── store
-│   ├── article.go
-│   └── user.go
-├── user
-│   └── user.go
+│   ├── item.go
+│   └── player.go
+├── player
+│   └── player.go
 └── utils
     ├── errors.go
     ├── jwt.go

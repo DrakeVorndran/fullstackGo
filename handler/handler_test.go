@@ -7,12 +7,12 @@ import (
 
 	"encoding/json"
 
-	"golang-starter-pack/article"
 	"golang-starter-pack/db"
+	"golang-starter-pack/itemem"
 	"golang-starter-pack/model"
-	"golang-starter-pack/router"
+	"golang-starter-pack/player"
+	"golang-starter-pack/rouoetr"
 	"golang-starter-pack/store"
-	"golang-starter-pack/user"
 
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
@@ -21,8 +21,8 @@ import (
 
 var (
 	d  *gorm.DB
-	us user.Store
-	as article.Store
+	us player.Store
+	as item.Store
 	h  *Handler
 	e  *echo.Echo
 )
@@ -41,8 +41,8 @@ func authHeader(token string) string {
 func setup() {
 	d = db.TestDB()
 	db.AutoMigrate(d)
-	us = store.NewUserStore(d)
-	as = store.NewArticleStore(d)
+	us = store.NewPlayerStore(d)
+	as = store.NewItemStore(d)
 	h = NewHandler(us, as)
 	e = router.New()
 	loadFixtures()
@@ -62,11 +62,11 @@ func responseMap(b []byte, key string) map[string]interface{} {
 }
 
 func loadFixtures() error {
-	u1bio := "user1 bio"
-	u1image := "http://realworld.io/user1.jpg"
-	u1 := model.User{
-		Username: "user1",
-		Email:    "user1@realworld.io",
+	u1bio := "player1 bio"
+	u1image := "http://realworld.io/player1.jpg"
+	u1 := model.Player{
+		Username: "player1",
+		Email:    "player1@realworld.io",
 		Bio:      &u1bio,
 		Image:    &u1image,
 	}
@@ -75,11 +75,11 @@ func loadFixtures() error {
 		return err
 	}
 
-	u2bio := "user2 bio"
-	u2image := "http://realworld.io/user2.jpg"
-	u2 := model.User{
-		Username: "user2",
-		Email:    "user2@realworld.io",
+	u2bio := "player2 bio"
+	u2image := "http://realworld.io/player2.jpg"
+	u2 := model.Player{
+		Username: "player2",
+		Email:    "player2@realworld.io",
 		Bio:      &u2bio,
 		Image:    &u2image,
 	}
@@ -89,11 +89,11 @@ func loadFixtures() error {
 	}
 	us.AddFollower(&u2, u1.ID)
 
-	a := model.Article{
-		Slug:        "article1-slug",
-		Title:       "article1 title",
-		Description: "article1 description",
-		Body:        "article1 body",
+	a := model.Item{
+		Slug:        "item1-slug",
+		Title:       "item1 title",
+		Description: "item1 description",
+		Body:        "item1 body",
 		AuthorID:    1,
 		Tags: []model.Tag{
 			{
@@ -104,20 +104,20 @@ func loadFixtures() error {
 			},
 		},
 	}
-	as.CreateArticle(&a)
+	as.CreateItem(&a)
 	as.AddComment(&a, &model.Comment{
-		Body:      "article1 comment1",
-		ArticleID: 1,
-		UserID:    1,
+		Body:     item1 comment1",
+		ItemID:     1,
+		PlayerID:
 	})
 
-	a2 := model.Article{
-		Slug:        "article2-slug",
-		Title:       "article2 title",
-		Description: "article2 description",
-		Body:        "article2 body",
+	a2 := model.Item{
+		Slug:        "item2-slug",
+		Title:       "item2 title",
+		Description: "item2 description",
+		Body:        "item2 body",
 		AuthorID:    2,
-		Favorites: []model.User{
+		Favorites: []model.Player{
 			u1,
 		},
 		Tags: []model.Tag{
@@ -126,11 +126,11 @@ func loadFixtures() error {
 			},
 		},
 	}
-	as.CreateArticle(&a2)
+	as.CreateItem(&a2)
 	as.AddComment(&a2, &model.Comment{
-		Body:      "article2 comment1 by user1",
-		ArticleID: 2,
-		UserID:    1,
+		Body:     item2 comment1 by player1",
+		ItemID:     2,
+		PlayerID:
 	})
 	as.AddFavorite(&a2, 1)
 

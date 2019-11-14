@@ -5,18 +5,18 @@ import (
 	"golang-starter-pack/model"
 )
 
-type UserStore struct {
+type PlayerStore struct {
 	db *gorm.DB
 }
 
-func NewUserStore(db *gorm.DB) *UserStore {
-	return &UserStore{
+func NewPlayerStore(db *gorm.DB) *PlayerStore {
+	return &PlayerStore{
 		db: db,
 	}
 }
 
-func (us *UserStore) GetByID(id uint) (*model.User, error) {
-	var m model.User
+func (us *PlayerStore) GetByID(id uint) (*model.Player, error) {
+	var m model.Player
 	if err := us.db.First(&m, id).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
@@ -26,9 +26,9 @@ func (us *UserStore) GetByID(id uint) (*model.User, error) {
 	return &m, nil
 }
 
-func (us *UserStore) GetByEmail(e string) (*model.User, error) {
-	var m model.User
-	if err := us.db.Where(&model.User{Email: e}).First(&m).Error; err != nil {
+func (us *PlayerStore) GetByEmail(e string) (*model.Player, error) {
+	var m model.Player
+	if err := us.db.Where(&model.Player{Email: e}).First(&m).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
 		}
@@ -37,9 +37,9 @@ func (us *UserStore) GetByEmail(e string) (*model.User, error) {
 	return &m, nil
 }
 
-func (us *UserStore) GetByUsername(username string) (*model.User, error) {
-	var m model.User
-	if err := us.db.Where(&model.User{Username: username}).Preload("Followers").First(&m).Error; err != nil {
+func (us *PlayerStore) GetByUsername(username string) (*model.Player, error) {
+	var m model.Player
+	if err := us.db.Where(&model.Player{Username: username}).Preload("Followers").First(&m).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return nil, nil
 		}
@@ -48,19 +48,19 @@ func (us *UserStore) GetByUsername(username string) (*model.User, error) {
 	return &m, nil
 }
 
-func (us *UserStore) Create(u *model.User) (err error) {
+func (us *PlayerStore) Create(u *model.Player) (err error) {
 	return us.db.Create(u).Error
 }
 
-func (us *UserStore) Update(u *model.User) error {
+func (us *PlayerStore) Update(u *model.Player) error {
 	return us.db.Model(u).Update(u).Error
 }
 
-func (us *UserStore) AddFollower(u *model.User, followerID uint) error {
+func (us *PlayerStore) AddFollower(u *model.Player, followerID uint) error {
 	return us.db.Model(u).Association("Followers").Append(&model.Follow{FollowerID: followerID, FollowingID: u.ID}).Error
 }
 
-func (us *UserStore) RemoveFollower(u *model.User, followerID uint) error {
+func (us *PlayerStore) RemoveFollower(u *model.Player, followerID uint) error {
 	f := model.Follow{
 		FollowerID:  followerID,
 		FollowingID: u.ID,
@@ -74,9 +74,9 @@ func (us *UserStore) RemoveFollower(u *model.User, followerID uint) error {
 	return nil
 }
 
-func (us *UserStore) IsFollower(userID, followerID uint) (bool, error) {
+func (us *PlayerStore) IsFollower(playerID, followerID uint) (bool, error) {
 	var f model.Follow
-	if err := us.db.Where("following_id = ? AND follower_id = ?", userID, followerID).Find(&f).Error; err != nil {
+	if err := us.db.Where("following_id = ? AND follower_id = ?", playerID, followerID).Find(&f).Error; err != nil {
 		if gorm.IsRecordNotFoundError(err) {
 			return false, nil
 		}

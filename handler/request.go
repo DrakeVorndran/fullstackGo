@@ -6,71 +6,71 @@ import (
 	"golang-starter-pack/model"
 )
 
-type userUpdateRequest struct {
-	User struct {
+type playerUpdateRequest struct {
+	Player struct {
 		Username string `json:"username"`
 		Email    string `json:"email" validate:"email"`
 		Password string `json:"password"`
 		Bio      string `json:"bio"`
 		Image    string `json:"image"`
-	} `json:"user"`
+	} `json:"player"`
 }
 
-func newUserUpdateRequest() *userUpdateRequest {
-	return new(userUpdateRequest)
+func newPlayerUpdateRequest() *playerUpdateRequest {
+	return new(playerUpdateRequest)
 }
 
-func (r *userUpdateRequest) populate(u *model.User) {
-	r.User.Username = u.Username
-	r.User.Email = u.Email
-	r.User.Password = u.Password
+func (r *playerUpdateRequest) populate(u *model.Player) {
+	r.Player.Username = u.Username
+	r.Player.Email = u.Email
+	r.Player.Password = u.Password
 	if u.Bio != nil {
-		r.User.Bio = *u.Bio
+		r.Player.Bio = *u.Bio
 	}
 	if u.Image != nil {
-		r.User.Image = *u.Image
+		r.Player.Image = *u.Image
 	}
 }
 
-func (r *userUpdateRequest) bind(c echo.Context, u *model.User) error {
+func (r *playerUpdateRequest) bind(c echo.Context, u *model.Player) error {
 	if err := c.Bind(r); err != nil {
 		return err
 	}
 	if err := c.Validate(r); err != nil {
 		return err
 	}
-	u.Username = r.User.Username
-	u.Email = r.User.Email
-	if r.User.Password != u.Password {
-		h, err := u.HashPassword(r.User.Password)
+	u.Username = r.Player.Username
+	u.Email = r.Player.Email
+	if r.Player.Password != u.Password {
+		h, err := u.HashPassword(r.Player.Password)
 		if err != nil {
 			return err
 		}
 		u.Password = h
 	}
-	u.Bio = &r.User.Bio
-	u.Image = &r.User.Image
+	u.Bio = &r.Player.Bio
+	u.Image = &r.Player.Image
 	return nil
 }
 
-type userRegisterRequest struct {
-	User struct {
+type playerRegisterRequest struct {
+	Player struct {
 		Username string `json:"username" validate:"required"`
 		Email    string `json:"email" validate:"required,email"`
 		Password string `json:"password" validate:"required"`
-	} `json:"user"`
+	} `json:"player"`
 }
 
-func (r *userRegisterRequest) bind(c echo.Context, u *model.User) error {
+func (r *playerRegisterRequest) bind(c echo.Context, u *model.Player) error {
 	if err := c.Bind(r); err != nil {
 		return err
 	}
 	if err := c.Validate(r); err != nil {
 		return err
 	}
-	u.Username = r.User.Username
-	u.Email = r.User.Email
-	h, err := u.HashPassword(r.User.Password)
+	u.Username = r.Player.Username
+	u.Email = r.Player.Email
+	h, err := u.HashPassword(r.Player.Password)
 	if err != nil {
 		return err
 	}
@@ -78,14 +78,14 @@ func (r *userRegisterRequest) bind(c echo.Context, u *model.User) error {
 	return nil
 }
 
-type userLoginRequest struct {
-	User struct {
+type playerLoginRequest struct {
+	Player struct {
 		Email    string `json:"email" validate:"required,email"`
 		Password string `json:"password" validate:"required"`
-	} `json:"user"`
+	} `json:"player"`
 }
 
-func (r *userLoginRequest) bind(c echo.Context) error {
+func (r *playerLoginRequest) bind(c echo.Context) error {
 	if err := c.Bind(r); err != nil {
 		return err
 	}
@@ -95,60 +95,60 @@ func (r *userLoginRequest) bind(c echo.Context) error {
 	return nil
 }
 
-type articleCreateRequest struct {
-	Article struct {
+type itemCreateRequest struct {
+	Items struct {
 		Title       string   `json:"title" validate:"required"`
 		Description string   `json:"description" validate:"required"`
 		Body        string   `json:"body" validate:"required"`
 		Tags        []string `json:"tagList, omitempty"`
-	} `json:"article"`
+	} `json:"item"`
 }
 
-func (r *articleCreateRequest) bind(c echo.Context, a *model.Article) error {
+func (r *itemCreateRequest) bind(c echo.Context, a *model.Item) error {
 	if err := c.Bind(r); err != nil {
 		return err
 	}
 	if err := c.Validate(r); err != nil {
 		return err
 	}
-	a.Title = r.Article.Title
-	a.Slug = slug.Make(r.Article.Title)
-	a.Description = r.Article.Description
-	a.Body = r.Article.Body
-	if r.Article.Tags != nil {
-		for _, t := range r.Article.Tags {
+	a.Title = r.Items.Title
+	a.Slug = slug.Make(r.Items.Title)
+	a.Description = r.Items.Description
+	a.Body = r.Items.Body
+	if r.Items.Tags != nil {
+		for _, t := range r.Items.Tags {
 			a.Tags = append(a.Tags, model.Tag{Tag: t})
 		}
 	}
 	return nil
 }
 
-type articleUpdateRequest struct {
-	Article struct {
+type itemUpdateRequest struct {
+	Items struct {
 		Title       string   `json:"title"`
 		Description string   `json:"description"`
 		Body        string   `json:"body"`
 		Tags        []string `json:"tagList"`
-	} `json:"article"`
+	} `json:"item"`
 }
 
-func (r *articleUpdateRequest) populate(a *model.Article) {
-	r.Article.Title = a.Title
-	r.Article.Description = a.Description
-	r.Article.Body = a.Body
+func (r *itemUpdateRequest) populate(a *model.Item) {
+	r.Items.Title = a.Title
+	r.Items.Description = a.Description
+	r.Items.Body = a.Body
 }
 
-func (r *articleUpdateRequest) bind(c echo.Context, a *model.Article) error {
+func (r *itemUpdateRequest) bind(c echo.Context, a *model.Item) error {
 	if err := c.Bind(r); err != nil {
 		return err
 	}
 	if err := c.Validate(r); err != nil {
 		return err
 	}
-	a.Title = r.Article.Title
+	a.Title = r.Items.Title
 	a.Slug = slug.Make(a.Title)
-	a.Description = r.Article.Description
-	a.Body = r.Article.Body
+	a.Description = r.Items.Description
+	a.Body = r.Items.Body
 	return nil
 }
 
@@ -166,6 +166,6 @@ func (r *createCommentRequest) bind(c echo.Context, cm *model.Comment) error {
 		return err
 	}
 	cm.Body = r.Comment.Body
-	cm.UserID = userIDFromToken(c)
+	cm.PlayerID = playerIDFromToken(c)
 	return nil
 }

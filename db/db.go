@@ -41,9 +41,9 @@ func DropTestDB() error {
 //TODO: err check
 func AutoMigrate(db *gorm.DB) {
 	db.AutoMigrate(
-		&model.User{},
+		&model.Player{},
 		&model.Follow{},
-		&model.Article{},
+		&model.Item{},
 		&model.Comment{},
 		&model.Tag{},
 	)

@@ -3,29 +3,29 @@ package handler
 import (
 	"time"
 
-	"golang-starter-pack/model"
-	"golang-starter-pack/user"
-	"golang-starter-pack/utils"
 	"github.com/labstack/echo/v4"
+	"golang-starter-pack/model"
+	"golang-starter-pack/player"
+	"golang-starter-pack/utils"
 )
 
-type userResponse struct {
-	User struct {
+type playerResponse struct {
+	Player struct {
 		Username string  `json:"username"`
 		Email    string  `json:"email"`
 		Bio      *string `json:"bio"`
 		Image    *string `json:"image"`
 		Token    string  `json:"token"`
-	} `json:"user"`
+	} `json:"player"`
 }
 
-func newUserResponse(u *model.User) *userResponse {
-	r := new(userResponse)
-	r.User.Username = u.Username
-	r.User.Email = u.Email
-	r.User.Bio = u.Bio
-	r.User.Image = u.Image
-	r.User.Token = utils.GenerateJWT(u.ID)
+func newPlayerResponse(u *model.Player) *playerResponse {
+	r := new(playerResponse)
+	r.Player.Username = u.Username
+	r.Player.Email = u.Email
+	r.Player.Bio = u.Bio
+	r.Player.Image = u.Image
+	r.Player.Token = utils.GenerateJWT(u.ID)
 	return r
 }
 
@@ -38,16 +38,16 @@ type profileResponse struct {
 	} `json:"profile"`
 }
 
-func newProfileResponse(us user.Store, userID uint, u *model.User) *profileResponse {
+func newProfileResponse(us player.Store, playerID uint, u *model.Player) *profileResponse {
 	r := new(profileResponse)
 	r.Profile.Username = u.Username
 	r.Profile.Bio = u.Bio
 	r.Profile.Image = u.Image
-	r.Profile.Following, _ = us.IsFollower(u.ID, userID)
+	r.Profile.Following, _ = us.IsFollower(u.ID, playerID)
 	return r
 }
 
-type articleResponse struct {
+type itemResponse struct {
 	Slug           string    `json:"slug"`
 	Title          string    `json:"title"`
 	Description    string    `json:"description"`
@@ -65,17 +65,17 @@ type articleResponse struct {
 	} `json:"author"`
 }
 
-type singleArticleResponse struct {
-	Article *articleResponse `json:"article"`
+type singleItemResponse struct {
+	Item *itemResponse `json:"item"`
 }
 
-type articleListResponse struct {
-	Articles      []*articleResponse `json:"articles"`
-	ArticlesCount int                `json:"articlesCount"`
+type itemListResponse struct {
+	Items      []*itemResponse `json:"items"`
+	ItemsCount int             `json:"itemsCount"`
 }
 
-func newArticleResponse(c echo.Context, a *model.Article) *singleArticleResponse {
-	ar := new(articleResponse)
+func newItemResponse(c echo.Context, a *model.Item) *singleItemResponse {
+	ar := new(itemResponse)
 	ar.TagList = make([]string, 0)
 	ar.Slug = a.Slug
 	ar.Title = a.Title
@@ -87,7 +87,7 @@ func newArticleResponse(c echo.Context, a *model.Article) *singleArticleResponse
 		ar.TagList = append(ar.TagList, t.Tag)
 	}
 	for _, u := range a.Favorites {
-		if u.ID == userIDFromToken(c) {
+		if u.ID == playerIDFromToken(c) {
 			ar.Favorited = true
 		}
 	}
@@ -95,15 +95,15 @@ func newArticleResponse(c echo.Context, a *model.Article) *singleArticleResponse
 	ar.Author.Username = a.Author.Username
 	ar.Author.Image = a.Author.Image
 	ar.Author.Bio = a.Author.Bio
-	ar.Author.Following = a.Author.FollowedBy(userIDFromToken(c))
-	return &singleArticleResponse{ar}
+	ar.Author.Following = a.Author.FollowedBy(playerIDFromToken(c))
+	return &singleItemResponse{ar}
 }
 
-func newArticleListResponse(us user.Store, userID uint, articles []model.Article, count int) *articleListResponse {
-	r := new(articleListResponse)
-	r.Articles = make([]*articleResponse, 0)
-	for _, a := range articles {
-		ar := new(articleResponse)
+func newItemListResponse(us player.Store, playerID uint, items []model.Item, count int) *itemListResponse {
+	r := new(itemListResponse)
+	r.Items = make([]*itemResponse, 0)
+	for _, a := range items {
+		ar := new(itemResponse)
 		ar.TagList = make([]string, 0)
 		ar.Slug = a.Slug
 		ar.Title = a.Title
@@ -115,7 +115,7 @@ func newArticleListResponse(us user.Store, userID uint, articles []model.Article
 			ar.TagList = append(ar.TagList, t.Tag)
 		}
 		for _, u := range a.Favorites {
-			if u.ID == userID {
+			if u.ID == playerID {
 				ar.Favorited = true
 			}
 		}
@@ -123,10 +123,10 @@ func newArticleListResponse(us user.Store, userID uint, articles []model.Article
 		ar.Author.Username = a.Author.Username
 		ar.Author.Image = a.Author.Image
 		ar.Author.Bio = a.Author.Bio
-		ar.Author.Following, _ = us.IsFollower(a.AuthorID, userID)
-		r.Articles = append(r.Articles, ar)
+		ar.Author.Following, _ = us.IsFollower(a.AuthorID, playerID)
+		r.Items = append(r.Items, ar)
 	}
-	r.ArticlesCount = count
+	r.ItemsCount = count
 	return r
 }
 
@@ -157,10 +157,10 @@ func newCommentResponse(c echo.Context, cm *model.Comment) *singleCommentRespons
 	comment.Body = cm.Body
 	comment.CreatedAt = cm.CreatedAt
 	comment.UpdatedAt = cm.UpdatedAt
-	comment.Author.Username = cm.User.Username
-	comment.Author.Image = cm.User.Image
-	comment.Author.Bio = cm.User.Bio
-	comment.Author.Following = cm.User.FollowedBy(userIDFromToken(c))
+	comment.Author.Username = cm.Player.Username
+	comment.Author.Image = cm.Player.Image
+	comment.Author.Bio = cm.Player.Bio
+	comment.Author.Following = cm.Player.FollowedBy(playerIDFromToken(c))
 	return &singleCommentResponse{comment}
 }
 
@@ -173,10 +173,10 @@ func newCommentListResponse(c echo.Context, comments []model.Comment) *commentLi
 		cr.Body = i.Body
 		cr.CreatedAt = i.CreatedAt
 		cr.UpdatedAt = i.UpdatedAt
-		cr.Author.Username = i.User.Username
-		cr.Author.Image = i.User.Image
-		cr.Author.Bio = i.User.Bio
-		cr.Author.Following = i.User.FollowedBy(userIDFromToken(c))
+		cr.Author.Username = i.Player.Username
+		cr.Author.Image = i.Player.Image
+		cr.Author.Bio = i.Player.Bio
+		cr.Author.Following = i.Player.FollowedBy(playerIDFromToken(c))
 
 		r.Comments = append(r.Comments, cr)
 	}
