@@ -106,7 +106,7 @@ func loadFixtures() error {
 	}
 	as.CreateItem(&a)
 	as.AddComment(&a, &model.Comment{
-		Body:     item1 comment1",
+		Body:     item1 "comment1",
 		ItemID:     1,
 		PlayerID:
 	})

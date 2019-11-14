@@ -1,20 +1,23 @@
 package handler
 
 import (
-	"net/http"
-
+	"fmt"
 	"github.com/labstack/echo/v4"
 	"golang-starter-pack/model"
 	"golang-starter-pack/utils"
+	"net/http"
 )
 
 func (h *Handler) SignUp(c echo.Context) error {
 	var u model.Player
 	req := &playerRegisterRequest{}
 	if err := req.bind(c, &u); err != nil {
+		fmt.Println("First IF")
+		// HERE!!!
 		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
 	if err := h.playerStore.Create(&u); err != nil {
+		fmt.Println("Second IF")
 		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
 	return c.JSON(http.StatusCreated, newPlayerResponse(&u))
